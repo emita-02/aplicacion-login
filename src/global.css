@@ -1,3 +1,14 @@
+@import "tailwindcss";
+@import "uniwind";
+
+/* Paleta de colores de Task-do */
+@theme {
+  --color-taskdo-brown: #684f48;
+  --color-taskdo-blue: #d6e9ed;
+  --color-taskdo-gray: #ccd6d6;
+  --color-taskdo-cream: #f9e7c7;
+}
+
 :root {
   --font-display:
     Spline Sans, Inter, ui-sans-serif, system-ui, sans-serif, Apple Color Emoji, Segoe UI Emoji,
