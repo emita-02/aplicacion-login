@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View, Pressable } from 'react-native';
 
 import { HomeHeader } from '@/features/tasks/components/home-header';
 import { TaskSummary } from '@/features/tasks/components/task-summary';
@@ -7,19 +7,23 @@ import {
   TaskFilters,
   type TaskFilter,
 } from '@/features/tasks/components/task-filters';
-import {
-  TaskList,
-  type Task,
-} from '@/features/tasks/components/task-list';
+import { TaskList } from '@/features/tasks/components/task-list';
+import { useTasks } from '@/features/tasks/hooks/use-tasks';
+import { useAuth } from '@/providers/auth-provider';
 
 export default function HomeScreen() {
+  const { user } = useAuth();
+  const {
+    tasks,
+    isLoading,
+    error,
+    refreshTasks,
+  } = useTasks(user?.id);
+
   const [selectedFilter, setSelectedFilter] =
     useState<TaskFilter>('all');
 
   const [searchValue, setSearchValue] = useState('');
-
-  // Temporalmente vacío. Después se obtendrán las tareas de Supabase.
-  const tasks: Task[] = [];
 
   const pendingCount = tasks.filter(
     (task) => !task.is_completed
@@ -73,10 +77,31 @@ export default function HomeScreen() {
             onSearchChange={setSearchValue}
           />
 
-          <TaskList
-            tasks={filteredTasks}
-            hasTasks={tasks.length > 0}
-          />
+          {isLoading ? (
+            <Text className="mt-8 text-center text-taskdo-brown">
+              Cargando tus tareas...
+            </Text>
+          ) : error ? (
+            <View className="mt-6 items-center gap-3">
+              <Text className="text-center text-taskdo-brown">
+                {error}
+              </Text>
+
+              <Pressable
+                onPress={refreshTasks}
+                className="rounded-xl bg-taskdo-brown px-5 py-3"
+              >
+                <Text className="font-semibold text-white">
+                  Intentar nuevamente
+                </Text>
+              </Pressable>
+            </View>
+          ) : (
+            <TaskList
+              tasks={filteredTasks}
+              hasTasks={tasks.length > 0}
+            />
+          )}
         </View>
       </ScrollView>
     </View>

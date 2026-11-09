@@ -1,15 +1,10 @@
 import { Text, View } from 'react-native';
 
 import { TaskEmptyState } from './task-empty-state';
+import type { Task } from '../types/task';
 
-export type Task = {
-  id: string;
-  title: string;
-  description: string | null;
-  task_date: string;
-  task_time: string;
-  is_completed: boolean;
-};
+
+export type { Task } from '../types/task';
 
 type TaskListProps = {
   tasks: Task[];
