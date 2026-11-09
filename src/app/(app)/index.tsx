@@ -15,7 +15,7 @@ import { TaskForm } from '@/features/tasks/components/task-form';
 import { useTasks } from '@/features/tasks/hooks/use-tasks';
 import { useAuth } from '@/providers/auth-provider';
 
-import type { NewTask } from '@/features/tasks/types/task';
+import type { NewTask, Task } from '@/features/tasks/types/task';
 
 export default function HomeScreen() {
   const { user } = useAuth();
@@ -26,6 +26,8 @@ export default function HomeScreen() {
     error,
     refreshTasks,
     addTask,
+    updateTask,
+    removeTask,
   } = useTasks(user?.id);
 
   const [selectedFilter, setSelectedFilter] =
@@ -34,6 +36,8 @@ export default function HomeScreen() {
   const [searchValue, setSearchValue] = useState('');
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [formKey, setFormKey] = useState(0);
 
   const pendingCount = tasks.filter(
     (task) => !task.is_completed
@@ -58,26 +62,101 @@ export default function HomeScreen() {
     });
   }, [tasks, selectedFilter, searchValue]);
 
-  const handleCreateTask = async (newTask: NewTask) => {
+  const handleSaveTask = async (
+    taskData: NewTask & { is_completed: boolean }
+  ) => {
     setIsSaving(true);
 
     try {
-      await addTask(newTask);
+      if (selectedTask) {
+        await updateTask(selectedTask.id, taskData);
+
+        Alert.alert(
+          '¡Tarea actualizada!',
+          'Los cambios se guardaron correctamente.'
+        );
+      } else {
+        await addTask(taskData);
+
+        Alert.alert(
+          '¡Tarea creada!',
+          'Tu tarea se guardó correctamente.'
+        );
+      }
+
       setIsFormVisible(false);
-      Alert.alert('¡Tarea creada!', 'Tu tarea se guardó correctamente.');
+      setSelectedTask(null);
     } catch (err) {
-      console.error('Error al crear la tarea:', err);
+      console.error('Error al guardar la tarea:', err);
+
       Alert.alert(
         'Error',
-        'No se pudo guardar la tarea. Inténtalo nuevamente.'
+        'No se pudieron guardar los cambios. Inténtalo nuevamente.'
       );
     } finally {
       setIsSaving(false);
     }
   };
 
+  const handleEditTask = (task: Task) => {
+    setSelectedTask(task);
+    setFormKey((current) => current + 1);
+    setIsFormVisible(true);
+  };
+
+  const handleDeleteTask = (task: Task) => {
+    Alert.alert(
+      'Eliminar tarea',
+      `¿Estás seguro de que deseas eliminar "${task.title}"?`,
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await removeTask(task.id);
+
+              Alert.alert(
+                'Tarea eliminada',
+                'La tarea se eliminó correctamente.'
+              );
+            } catch (err) {
+              console.error('Error al eliminar la tarea:', err);
+
+              Alert.alert(
+                'Error',
+                'No se pudo eliminar la tarea.'
+              );
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleToggleComplete = async (task: Task) => {
+    try {
+      await updateTask(task.id, {
+        is_completed: !task.is_completed,
+      });
+    } catch (err) {
+      console.error('Error al cambiar el estado:', err);
+
+      Alert.alert(
+        'Error',
+        'No se pudo actualizar el estado de la tarea.'
+      );
+    }
+  };
+
+
+
   return (
-    <View className="flex-1 bg-[#F2F2F2]">
+    <View className="flex-1 bg-taskdo-blue">
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerClassName="pb-10"
@@ -99,7 +178,11 @@ export default function HomeScreen() {
           </Text>
 
           <Pressable
-            onPress={() => setIsFormVisible(true)}
+            onPress={() => {
+              setIsFormVisible(true);
+              setSelectedTask(null);
+              setFormKey((current) => current + 1);
+            }}
             className="mt-5 items-center rounded-xl bg-taskdo-brown py-4"
           >
             <Text className="font-bold text-white">
@@ -137,16 +220,24 @@ export default function HomeScreen() {
             <TaskList
               tasks={filteredTasks}
               hasTasks={tasks.length > 0}
+              onEdit={handleEditTask}
+              onDelete={handleDeleteTask}
+              onToggleComplete={handleToggleComplete}
             />
           )}
         </View>
       </ScrollView>
 
       <TaskForm
+        key={formKey}
         visible={isFormVisible}
         isSaving={isSaving}
-        onClose={() => setIsFormVisible(false)}
-        onSubmit={handleCreateTask}
+        initialTask={selectedTask}
+        onClose={() => {
+          setIsFormVisible(false);
+          setSelectedTask(null);
+        }}
+        onSubmit={handleSaveTask}
       />
     </View>
   );

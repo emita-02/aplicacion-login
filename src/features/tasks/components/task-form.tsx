@@ -6,18 +6,20 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  Switch,
   Text,
   TextInput,
   View,
 } from 'react-native';
 
-import type { NewTask } from '../types/task';
+import type { NewTask, Task } from '../types/task';
 
 type TaskFormProps = {
   visible: boolean;
   isSaving: boolean;
+  initialTask: Task | null;
   onClose: () => void;
-  onSubmit: (task: NewTask) => Promise<void>;
+  onSubmit: (task: NewTask & { is_completed: boolean }) => Promise<void>;
 };
 
 function getCurrentDate() {
@@ -32,13 +34,23 @@ function getCurrentDate() {
 export function TaskForm({
   visible,
   isSaving,
+  initialTask,
   onClose,
   onSubmit,
 }: TaskFormProps) {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [taskDate, setTaskDate] = useState(getCurrentDate());
-  const [taskTime, setTaskTime] = useState('09:00');
+  const [title, setTitle] = useState(initialTask?.title ?? '');
+  const [description, setDescription] = useState(
+    initialTask?.description ?? ''
+  );
+  const [taskDate, setTaskDate] = useState(
+    initialTask?.task_date ?? getCurrentDate()
+  );
+  const [taskTime, setTaskTime] = useState(
+    initialTask?.task_time?.slice(0, 5) ?? '09:00'
+  );
+  const [isCompleted, setIsCompleted] = useState(
+    initialTask?.is_completed ?? false
+  );
 
   const handleSubmit = async () => {
     if (!title.trim()) {
@@ -52,7 +64,7 @@ export function TaskForm({
     if (!validDate || !validTime) {
       Alert.alert(
         'Datos incorrectos',
-        'Ingresa una fecha con formato AAAA-MM-DD y una hora con formato HH:mm.'
+        'Ingresa una fecha AAAA-MM-DD y una hora HH:mm.'
       );
       return;
     }
@@ -74,13 +86,12 @@ export function TaskForm({
       description: description.trim() || null,
       task_date: taskDate,
       task_time: `${taskTime}:00`,
+      is_completed: isCompleted,
     });
-
-    setTitle('');
-    setDescription('');
-    setTaskDate(getCurrentDate());
-    setTaskTime('09:00');
   };
+
+  const inputClass =
+    'mb-5 rounded-xl border border-taskdo-gray px-4 py-3 text-taskdo-brown';
 
   return (
     <Modal
@@ -93,21 +104,21 @@ export function TaskForm({
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         className="flex-1 justify-end bg-black/40"
       >
-        <View className="max-h-[90%] rounded-t-[28px] bg-white px-5 pb-8 pt-6">
+        <View className="max-h-[90%] rounded-t-[28px] bg-taskdo-blue px-5 pb-8 pt-6">
           <ScrollView keyboardShouldPersistTaps="handled">
             <View className="mb-6 flex-row items-center justify-between">
               <Text className="text-2xl font-bold text-taskdo-brown">
-                Nueva tarea
+                {initialTask ? 'Editar tarea' : 'Nueva tarea'}
               </Text>
 
               <Pressable onPress={onClose} disabled={isSaving}>
-                <Text className="text-base font-semibold text-taskdo-brown">
+                <Text className="font-semibold text-taskdo-brown">
                   Cerrar
                 </Text>
               </Pressable>
             </View>
 
-            <Text className="mb-2 text-sm font-semibold text-taskdo-brown">
+            <Text className="mb-2 font-semibold text-taskdo-brown">
               Título *
             </Text>
 
@@ -117,10 +128,10 @@ export function TaskForm({
               placeholder="Ej. Estudiar para el examen"
               placeholderTextColor="#7A706D"
               maxLength={100}
-              className="mb-5 rounded-xl border border-taskdo-gray px-4 py-3 text-taskdo-brown"
+              className={inputClass}
             />
 
-            <Text className="mb-2 text-sm font-semibold text-taskdo-brown">
+            <Text className="mb-2 font-semibold text-taskdo-brown">
               Descripción
             </Text>
 
@@ -135,8 +146,8 @@ export function TaskForm({
               className="mb-5 min-h-[90px] rounded-xl border border-taskdo-gray px-4 py-3 text-taskdo-brown"
             />
 
-            <Text className="mb-2 text-sm font-semibold text-taskdo-brown">
-              Fecha *
+            <Text className="mb-2 font-semibold text-taskdo-brown">
+              Fecha programada *
             </Text>
 
             <TextInput
@@ -145,11 +156,11 @@ export function TaskForm({
               placeholder="AAAA-MM-DD"
               placeholderTextColor="#7A706D"
               keyboardType="numbers-and-punctuation"
-              className="mb-5 rounded-xl border border-taskdo-gray px-4 py-3 text-taskdo-brown"
+              className={inputClass}
             />
 
-            <Text className="mb-2 text-sm font-semibold text-taskdo-brown">
-              Hora *
+            <Text className="mb-2 font-semibold text-taskdo-brown">
+              Hora programada *
             </Text>
 
             <TextInput
@@ -158,8 +169,31 @@ export function TaskForm({
               placeholder="HH:mm"
               placeholderTextColor="#7A706D"
               keyboardType="numbers-and-punctuation"
-              className="mb-6 rounded-xl border border-taskdo-gray px-4 py-3 text-taskdo-brown"
+              className={inputClass}
             />
+
+            {initialTask ? (
+              <View className="mb-6 flex-row items-center justify-between rounded-xl bg-taskdo-cream p-4">
+                <View className="flex-1">
+                  <Text className="font-bold text-taskdo-brown">
+                    Estado de la tarea
+                  </Text>
+                  <Text className="mt-1 text-sm text-taskdo-brown">
+                    {isCompleted ? 'Completada' : 'Pendiente'}
+                  </Text>
+                </View>
+
+                <Switch
+                  value={isCompleted}
+                  onValueChange={setIsCompleted}
+                  trackColor={{
+                    false: '#CCD6D6',
+                    true: '#684F48',
+                  }}
+                  thumbColor="#FFFFFF"
+                />
+              </View>
+            ) : null}
 
             <Pressable
               onPress={handleSubmit}
@@ -169,7 +203,11 @@ export function TaskForm({
               }`}
             >
               <Text className="font-bold text-white">
-                {isSaving ? 'Guardando...' : 'Guardar tarea'}
+                {isSaving
+                  ? 'Guardando...'
+                  : initialTask
+                    ? 'Guardar cambios'
+                    : 'Crear tarea'}
               </Text>
             </Pressable>
           </ScrollView>

@@ -13,3 +13,7 @@ export type NewTask = {
   task_date: string;
   task_time: string;
 };
+
+export type TaskChanges = Partial<NewTask> & {
+  is_completed?: boolean;
+};

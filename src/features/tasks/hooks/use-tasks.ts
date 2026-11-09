@@ -3,9 +3,11 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   createTask as createTaskService,
   getTasks,
+  updateTask as updateTaskService,
+  deleteTask as deleteTaskService,
 } from '../services/task-service';
 
-import type { NewTask, Task } from '../types/task';
+import type { NewTask, Task, TaskChanges } from '../types/task';
 
 export function useTasks(userId?: string) {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -93,11 +95,61 @@ export function useTasks(userId?: string) {
     [userId]
   );
 
+  const updateTask = useCallback(
+    async (taskId: string, changes: TaskChanges) => {
+      if (!userId) {
+        throw new Error('No hay un usuario autenticado.');
+      }
+
+      const updatedTask = await updateTaskService(
+        userId,
+        taskId,
+        changes
+      );
+
+      setTasks((currentTasks) =>
+        currentTasks
+          .map((task) =>
+            task.id === taskId ? updatedTask : task
+          )
+          .sort((a, b) => {
+            const dateComparison = a.task_date.localeCompare(b.task_date);
+
+            if (dateComparison !== 0) {
+              return dateComparison;
+            }
+
+            return a.task_time.localeCompare(b.task_time);
+          })
+      );
+
+      return updatedTask;
+    },
+    [userId]
+  );
+
+  const removeTask = useCallback(
+    async (taskId: string) => {
+      if (!userId) {
+        throw new Error('No hay un usuario autenticado.');
+      }
+
+      await deleteTaskService(userId, taskId);
+
+      setTasks((currentTasks) =>
+        currentTasks.filter((task) => task.id !== taskId)
+      );
+    },
+    [userId]
+  );
+
   return {
     tasks,
     isLoading,
     error,
     refreshTasks: fetchTasks,
     addTask,
+    updateTask,
+    removeTask,
   };
 }
