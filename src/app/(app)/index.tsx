@@ -177,19 +177,6 @@ export default function HomeScreen() {
             Organiza tus actividades
           </Text>
 
-          <Pressable
-            onPress={() => {
-              setIsFormVisible(true);
-              setSelectedTask(null);
-              setFormKey((current) => current + 1);
-            }}
-            className="mt-5 items-center rounded-xl bg-taskdo-brown py-4"
-          >
-            <Text className="font-bold text-white">
-              + Nueva tarea
-            </Text>
-          </Pressable>
-
           <TaskFilters
             selectedFilter={selectedFilter}
             onFilterChange={setSelectedFilter}
@@ -227,6 +214,23 @@ export default function HomeScreen() {
           )}
         </View>
       </ScrollView>
+
+      <View className="absolute bottom-5 right-5">
+        <Pressable
+          onPress={() => {
+            setIsFormVisible(true);
+            setSelectedTask(null);
+            setFormKey((current) => current + 1);
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Crear nueva tarea"
+          className="h-14 w-14 items-center justify-center rounded-full border-2 border-taskdo-cream bg-taskdo-brown shadow-lg"
+        >
+          <Text className="text-3xl font-light text-taskdo-cream">
+            +
+          </Text>
+        </Pressable>
+      </View>
 
       <TaskForm
         key={formKey}

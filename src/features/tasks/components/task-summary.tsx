@@ -9,39 +9,33 @@ export function TaskSummary({
   pendingCount,
   completedCount,
 }: TaskSummaryProps) {
+  const totalCount = pendingCount + completedCount;
+
   return (
-    <View className="mt-7 px-5">
-      <Text className="mb-4 text-xl font-bold text-taskdo-brown">
-        Resumen de tus tareas
-      </Text>
-
-      <View className="flex-row gap-3">
-        <View className="min-h-[125px] flex-1 justify-center rounded-2xl bg-taskdo-blue p-4">
-          <Text className="text-sm font-semibold text-taskdo-brown">
-            Pendientes
+    <View className="mt-5 px-5">
+      <View className="flex-row items-center justify-between rounded-2xl bg-taskdo-cream p-4">
+        <View className="flex-1 pr-3">
+          <Text className="mb-1 text-[10px] font-bold uppercase tracking-wider text-taskdo-brown/70">
+            Resumen del día
           </Text>
 
-          <Text className="my-1 text-3xl font-bold text-taskdo-brown">
-            {pendingCount}
-          </Text>
-
-          <Text className="text-xs text-taskdo-brown">
-            Por completar
+          <Text className="text-sm font-bold text-taskdo-brown">
+            {pendingCount === 0
+              ? '¡Genial! No tienes tareas pendientes'
+              : `Tienes ${pendingCount} tarea${pendingCount === 1 ? '' : 's'} pendiente${pendingCount === 1 ? '' : 's'}`}
           </Text>
         </View>
 
-        <View className="min-h-[125px] flex-1 justify-center rounded-2xl bg-taskdo-cream p-4">
-          <Text className="text-sm font-semibold text-taskdo-brown">
-            Completadas
-          </Text>
-
-          <Text className="my-1 text-3xl font-bold text-taskdo-brown">
+        <View className="h-12 w-12 items-center justify-center rounded-xl bg-taskdo-brown">
+          <Text className="text-base font-bold text-taskdo-cream">
             {completedCount}
           </Text>
 
-          <Text className="text-xs text-taskdo-brown">
-            Tareas realizadas
-          </Text>
+          <View className="flex-row items-center">
+            <Text className="text-[9px] text-taskdo-cream/80">
+              /{totalCount}
+            </Text>
+          </View>
         </View>
       </View>
     </View>
