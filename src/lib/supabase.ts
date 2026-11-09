@@ -1,8 +1,10 @@
+import '@/lib/crypto-polyfill';
 
 import 'react-native-url-polyfill/auto';
-import 'expo-sqlite/localStorage/install';
 
 import { createClient } from '@supabase/supabase-js';
+
+import { authStorage } from '@/lib/auth-storage';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!;
 const supabasePublishableKey =
@@ -13,10 +15,11 @@ export const supabase = createClient(
   supabasePublishableKey,
   {
     auth: {
-      storage: localStorage,
+      storage: authStorage,
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: false,
+      flowType: 'pkce',
     },
   }
 );
