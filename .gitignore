@@ -41,3 +41,8 @@ example
 # generated native folders
 /ios
 /android
+
+# archivos
+CLAUDE.md
+contexto_proyecto.md
+export_context.js

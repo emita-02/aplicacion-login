@@ -21,12 +21,18 @@ function RootNavigator() {
     <>
       <AnimatedSplashOverlay />
       <Stack screenOptions={{ headerShown: false }}>
+        {/* Accessible with or without a session so the confirmation result can
+            be shown before navigating into the app. */}
+        <Stack.Screen name="auth/confirm-email" />
+        <Stack.Screen name="auth/callback" />
+
         <Stack.Protected guard={isAuthenticated} redirectTo="/sign-in">
           <Stack.Screen name="(app)" />
         </Stack.Protected>
 
         <Stack.Protected guard={!isAuthenticated} redirectTo="/">
           <Stack.Screen name="sign-in" />
+          <Stack.Screen name="sign-up" />
         </Stack.Protected>
       </Stack>
     </>
