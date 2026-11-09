@@ -1,29 +1,39 @@
 import { useMemo, useState } from 'react';
-import { ScrollView, Text, View, Pressable } from 'react-native';
+import {
+  Alert,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 
 import { HomeHeader } from '@/features/tasks/components/home-header';
 import { TaskSummary } from '@/features/tasks/components/task-summary';
-import {
-  TaskFilters,
-  type TaskFilter,
-} from '@/features/tasks/components/task-filters';
+import { TaskFilters, type TaskFilter } from '@/features/tasks/components/task-filters';
 import { TaskList } from '@/features/tasks/components/task-list';
+import { TaskForm } from '@/features/tasks/components/task-form';
 import { useTasks } from '@/features/tasks/hooks/use-tasks';
 import { useAuth } from '@/providers/auth-provider';
 
+import type { NewTask } from '@/features/tasks/types/task';
+
 export default function HomeScreen() {
   const { user } = useAuth();
+
   const {
     tasks,
     isLoading,
     error,
     refreshTasks,
+    addTask,
   } = useTasks(user?.id);
 
   const [selectedFilter, setSelectedFilter] =
     useState<TaskFilter>('all');
 
   const [searchValue, setSearchValue] = useState('');
+  const [isFormVisible, setIsFormVisible] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const pendingCount = tasks.filter(
     (task) => !task.is_completed
@@ -48,6 +58,24 @@ export default function HomeScreen() {
     });
   }, [tasks, selectedFilter, searchValue]);
 
+  const handleCreateTask = async (newTask: NewTask) => {
+    setIsSaving(true);
+
+    try {
+      await addTask(newTask);
+      setIsFormVisible(false);
+      Alert.alert('¡Tarea creada!', 'Tu tarea se guardó correctamente.');
+    } catch (err) {
+      console.error('Error al crear la tarea:', err);
+      Alert.alert(
+        'Error',
+        'No se pudo guardar la tarea. Inténtalo nuevamente.'
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <View className="flex-1 bg-[#F2F2F2]">
       <ScrollView
@@ -69,6 +97,15 @@ export default function HomeScreen() {
           <Text className="mt-1 text-sm text-[#7A706D]">
             Organiza tus actividades
           </Text>
+
+          <Pressable
+            onPress={() => setIsFormVisible(true)}
+            className="mt-5 items-center rounded-xl bg-taskdo-brown py-4"
+          >
+            <Text className="font-bold text-white">
+              + Nueva tarea
+            </Text>
+          </Pressable>
 
           <TaskFilters
             selectedFilter={selectedFilter}
@@ -104,6 +141,13 @@ export default function HomeScreen() {
           )}
         </View>
       </ScrollView>
+
+      <TaskForm
+        visible={isFormVisible}
+        isSaving={isSaving}
+        onClose={() => setIsFormVisible(false)}
+        onSubmit={handleCreateTask}
+      />
     </View>
   );
 }

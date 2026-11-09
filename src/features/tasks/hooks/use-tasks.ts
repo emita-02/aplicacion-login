@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { getTasks } from '../services/task-service';
-import type { Task } from '../types/task';
+import {
+  createTask as createTaskService,
+  getTasks,
+} from '../services/task-service';
+
+import type { NewTask, Task } from '../types/task';
 
 export function useTasks(userId?: string) {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -64,10 +68,36 @@ export function useTasks(userId?: string) {
     };
   }, [userId]);
 
+  const addTask = useCallback(
+    async (newTask: NewTask) => {
+      if (!userId) {
+        throw new Error('No hay un usuario autenticado.');
+      }
+
+      const createdTask = await createTaskService(userId, newTask);
+
+      setTasks((currentTasks) =>
+        [...currentTasks, createdTask].sort((a, b) => {
+          const dateComparison = a.task_date.localeCompare(b.task_date);
+
+          if (dateComparison !== 0) {
+            return dateComparison;
+          }
+
+          return a.task_time.localeCompare(b.task_time);
+        })
+      );
+
+      return createdTask;
+    },
+    [userId]
+  );
+
   return {
     tasks,
     isLoading,
     error,
     refreshTasks: fetchTasks,
+    addTask,
   };
 }
