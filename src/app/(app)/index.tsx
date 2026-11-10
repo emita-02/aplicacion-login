@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
   Alert,
+  Modal,
   Pressable,
   ScrollView,
   Text,
@@ -16,6 +17,7 @@ import { useTasks } from '@/features/tasks/hooks/use-tasks';
 import { useAuth } from '@/providers/auth-provider';
 
 import type { NewTask, Task } from '@/features/tasks/types/task';
+import { LottieAnimation } from '@/components/lottie-animation';
 
 export default function HomeScreen() {
   const { user } = useAuth();
@@ -38,6 +40,12 @@ export default function HomeScreen() {
   const [isSaving, setIsSaving] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [formKey, setFormKey] = useState(0);
+
+  const [isSuccessVisible, setIsSuccessVisible] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+
+  const [isErrorVisible, setIsErrorVisible] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const pendingCount = tasks.filter(
     (task) => !task.is_completed
@@ -62,6 +70,11 @@ export default function HomeScreen() {
     });
   }, [tasks, selectedFilter, searchValue]);
 
+  const showError = (message: string) => {
+    setErrorMessage(message);
+    setIsErrorVisible(true);
+  };
+
   const handleSaveTask = async (
     taskData: NewTask & { is_completed: boolean }
   ) => {
@@ -71,28 +84,21 @@ export default function HomeScreen() {
       if (selectedTask) {
         await updateTask(selectedTask.id, taskData);
 
-        Alert.alert(
-          '¡Tarea actualizada!',
-          'Los cambios se guardaron correctamente.'
-        );
+        setSuccessMessage('Los cambios se guardaron correctamente.');
       } else {
         await addTask(taskData);
 
-        Alert.alert(
-          '¡Tarea creada!',
-          'Tu tarea se guardó correctamente.'
-        );
+        setSuccessMessage('Tu tarea se creó correctamente.');
       }
+
+      setIsSuccessVisible(true);
 
       setIsFormVisible(false);
       setSelectedTask(null);
     } catch (err) {
       console.error('Error al guardar la tarea:', err);
 
-      Alert.alert(
-        'Error',
-        'No se pudieron guardar los cambios. Inténtalo nuevamente.'
-      );
+      showError('No se pudieron guardar los cambios. Inténtalo nuevamente.');
     } finally {
       setIsSaving(false);
     }
@@ -120,17 +126,13 @@ export default function HomeScreen() {
             try {
               await removeTask(task.id);
 
-              Alert.alert(
-                'Tarea eliminada',
-                'La tarea se eliminó correctamente.'
-              );
+              setSuccessMessage('La tarea se eliminó correctamente.');
+              setIsSuccessVisible(true);
+
             } catch (err) {
               console.error('Error al eliminar la tarea:', err);
 
-              Alert.alert(
-                'Error',
-                'No se pudo eliminar la tarea.'
-              );
+              showError('No se pudo eliminar la tarea.');
             }
           },
         },
@@ -146,10 +148,7 @@ export default function HomeScreen() {
     } catch (err) {
       console.error('Error al cambiar el estado:', err);
 
-      Alert.alert(
-        'Error',
-        'No se pudo actualizar el estado de la tarea.'
-      );
+      showError('No se pudo actualizar el estado de la tarea.');
     }
   };
 
@@ -185,9 +184,17 @@ export default function HomeScreen() {
           />
 
           {isLoading ? (
-            <Text className="mt-8 text-center text-taskdo-brown">
-              Cargando tus tareas...
-            </Text>
+            <View className="mt-8 items-center justify-center">
+              <LottieAnimation
+                name="loading"
+                size={140}
+                loop
+              />
+
+              <Text className="mt-2 text-center text-taskdo-brown">
+                Cargando tus tareas...
+              </Text>
+            </View>
           ) : error ? (
             <View className="mt-6 items-center gap-3">
               <Text className="text-center text-taskdo-brown">
@@ -243,6 +250,73 @@ export default function HomeScreen() {
         }}
         onSubmit={handleSaveTask}
       />
+
+      <Modal
+        visible={isSuccessVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsSuccessVisible(false)}
+      >
+        <View className="flex-1 items-center justify-center bg-black/40 px-8">
+          <View className="w-full items-center rounded-3xl bg-white px-7 py-8">
+            <LottieAnimation
+              name="success"
+              size={150}
+            />
+
+            <Text className="mt-3 text-xl font-bold text-taskdo-brown">
+              ¡Excelente!
+            </Text>
+
+            <Text className="mt-2 text-center text-sm leading-6 text-taskdo-gray">
+              {successMessage}
+            </Text>
+
+            <Pressable
+              onPress={() => setIsSuccessVisible(false)}
+              className="mt-6 w-full items-center rounded-xl bg-taskdo-brown py-3"
+            >
+              <Text className="font-semibold text-white">
+                Continuar
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={isErrorVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsErrorVisible(false)}
+      >
+        <View className="flex-1 items-center justify-center bg-black/40 px-8">
+          <View className="w-full items-center rounded-3xl bg-white px-7 py-8">
+            <LottieAnimation
+              name="error"
+              size={150}
+            />
+
+            <Text className="mt-3 text-xl font-bold text-taskdo-brown">
+              ¡Ups! Algo salió mal
+            </Text>
+
+            <Text className="mt-2 text-center text-sm leading-6 text-taskdo-gray">
+              {errorMessage}
+            </Text>
+
+            <Pressable
+              onPress={() => setIsErrorVisible(false)}
+              className="mt-6 w-full items-center rounded-xl bg-taskdo-brown py-3"
+            >
+              <Text className="font-semibold text-white">
+                Entendido
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
     </View>
   );
 }
