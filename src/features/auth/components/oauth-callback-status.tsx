@@ -1,5 +1,4 @@
 import { router } from 'expo-router';
-import { useEffect } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 
 import { useAuth } from '@/providers/auth-provider';
@@ -9,23 +8,11 @@ import { AuthCard } from './auth-card';
 import { FormBanner } from './form-banner';
 import { PrimaryButton } from './primary-button';
 
-const SUCCESS_REDIRECT_DELAY_MS = 1600;
 
 export function OAuthCallbackStatus() {
   const { isAuthenticated } = useAuth();
   const { status, errorMessage } = useOAuthCallback();
 
-  useEffect(() => {
-    if (status !== 'success') {
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      router.replace('/');
-    }, SUCCESS_REDIRECT_DELAY_MS);
-
-    return () => clearTimeout(timeout);
-  }, [status]);
 
   if (status === 'loading') {
     return (
@@ -55,8 +42,9 @@ export function OAuthCallbackStatus() {
             <Text className="text-2xl font-bold text-taskdo-cream">✓</Text>
           </View>
           <Text className="text-center text-sm leading-5 text-taskdo-brown">
-            Tu cuenta de Google quedó conectada correctamente. Te llevaremos a la
-            aplicación en un momento.
+            Tu cuenta de Google quedó conectada correctamente. Presiona 
+            <Text className="font-bold" > continuar </Text> 
+            para ingresar a la aplicación.
           </Text>
         </View>
         <PrimaryButton label="Continuar ahora" onPress={() => router.replace('/')} />
